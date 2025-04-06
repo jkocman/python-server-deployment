@@ -32,6 +32,9 @@ def index():
         print("❌ ERROR: Data jsou prázdná")
         return "No data received", 400
     
+    if len(raw_data) > 5 * 1024 * 1024:  # 5 MB
+        return jsonify({"error": "Soubor je příliš velký"}), 413
+    
     file_like = io.BytesIO(raw_data);
     print(file_like);
 
