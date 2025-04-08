@@ -3,7 +3,7 @@ import numpy as np;
 
 def music_analysis(file_like):
     try:
-        y, sr = librosa.load(file_like)
+        y, sr = librosa.load(file_like, duration=30.0)
         print(f"✅ Loaded audio with {len(y)} samples, sample rate: {sr}")
     except Exception as e:
         print(f"❌ ERROR: Nepodařilo se načíst audio: {e}")

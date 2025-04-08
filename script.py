@@ -26,9 +26,6 @@ def index():
     if len(raw_data) == 0:
         return "No data received", 400
 
-    if len(raw_data) > 5 * 1024 * 1024:  # 5 MB limit
-        return jsonify({"error": "Soubor je příliš velký"}), 413
-
     file_like = io.BytesIO(raw_data)
 
     # Předání souboru do music_analysis
