@@ -21,17 +21,24 @@ app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # max 100 MB
 @app.route('/', methods=['POST'])
 def index():
     global global_data
+    print("📥 Přijatý POST požadavek na /")
     raw_data = request.get_data()
 
     if len(raw_data) == 0:
+        print("⚠️ Nebyla přijata žádná data")
         return "No data received", 400
+
+    print(f"📦 Velikost přijatých dat: {len(raw_data)} bajtů")
 
     file_like = io.BytesIO(raw_data)
 
     # Předání souboru do music_analysis
     try:
+        print("▶️ Spouštím music_analysis...")
         tempo_value, length, segments, rms_tresholds = music_analysis(file_like)
+        print("✅ music_analysis úspěšně dokončeno")
     except Exception as e:
+        print(f"❌ Chyba v music_analysis: {e}")
         return jsonify({"error": f"Chyba při zpracování audia: {str(e)}"}), 500
 
     def format_segments(segments):
@@ -41,6 +48,7 @@ def index():
         ]
 
     def short_prompt_writing(length, tempo, segments, rms_tresholds):
+        print("📝 Generuju prompt pro GPT...")
         prompt = (
             "Generate rhythm-based game level data in this format: time,id,x,y,scale,direction,speed,alpha,time length. "
             "Example: 100,1,750,500,0.6,0,3,0.2,5. "
@@ -65,11 +73,13 @@ def index():
             "Make sure that the level is really difficult. "
             "Do not include any introductory or explanatory text; generate only the level itself. "
         )
+        print("✅ Prompt hotový")
         return prompt
 
     prompt = short_prompt_writing(length, tempo_value, segments, rms_tresholds)
 
     try:
+        print("🤖 Posílám požadavek na GPT...")
         gpt_response = openai.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
@@ -78,7 +88,9 @@ def index():
             ]
         )
         gpt_reply = gpt_response.choices[0].message.content
+        print("✅ GPT odpověď získána")
     except Exception as e:
+        print(f"❌ Chyba při volání GPT API: {e}")
         return jsonify({"error": f"GPT-4 API failed: {str(e)}"}), 500
 
     global_data = {
@@ -90,14 +102,19 @@ def index():
         "reply": gpt_reply
     }
 
+    print("✅ Výstup vrácen klientovi")
     return jsonify({"response": gpt_reply})
 
 @app.route('/results', methods=['GET'])
 def get_results():
     global global_data
+    print("📥 GET požadavek na /results")
     if 'tempo_value' not in global_data:
+        print("⚠️ Není k dispozici žádný výsledek")
         return jsonify({"error": "No results available. Please process an audio file first."}), 400
+    print("✅ Výsledky nalezeny")
     return jsonify({"response": global_data['reply']})
 
 if __name__ == "__main__":
+    print("🚀 Spouštím Flask server...")
     app.run()
